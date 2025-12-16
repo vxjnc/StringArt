@@ -86,12 +86,13 @@ public:
     {
         if (!nextLine)
             return;
+        const uint16_t alpha_factor = static_cast<uint16_t>(std::round(alpha * 65536.0f));
 
         for (const auto &p : nextLine->getPixels())
         {
             uint8_t *pixel = image(p.x, p.y);
             for (int i = 0; i < 3; ++i)
-                pixel[i] = lerp<uint8_t>(color[i], pixel[i], alpha);
+                pixel[i] = lerp_fixed(color[i], pixel[i], alpha_factor);
 
             density[p.y * image.width() + p.x] += 1;
         }
@@ -109,17 +110,26 @@ public:
         const auto &pixels = line.getPixels();
 
         const int cur_w = current.width();
+        const uint8_t *current_data = current.data();
+        const uint8_t *original_data = original.data();
+
+        const uint16_t alpha_factor = static_cast<uint16_t>(std::lround(alpha * 65536.0f));
         for (const auto &p : pixels)
         {
             const int shift = p.y * cur_w + p.x;
-            const uint8_t *orig = original[shift * 3];
-            const uint8_t *curr = current[shift * 3];
+            const uint8_t *orig = original_data + shift * 3;
+            const uint8_t *curr = current_data + shift * 3;
 
             for (int i = 0; i < 3; ++i)
             {
-                const int16_t diffOB = orig[i] - lerp(color[i], curr[i], alpha);
+                const int16_t diffOB = orig[i] - lerp_fixed(color[i], curr[i], alpha_factor);
                 const int16_t diffOC = orig[i] - curr[i];
-                totalDiff += std::min<int32_t>(0, (diffOB - diffOC) * (diffOB + diffOC));
+
+                int32_t value = (diffOB - diffOC) * (diffOB + diffOC);
+                if (value < 0)
+                {
+                    totalDiff += value;
+                }
             }
 
             totalDensity += density[shift];

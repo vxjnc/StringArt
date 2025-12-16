@@ -187,7 +187,7 @@ Image Image::calculateEdges() const
     return edges;
 }
 
-uint8_t *Image::data() const
+uint8_t *Image::data() const noexcept
 {
     return data_;
 }
@@ -207,21 +207,21 @@ int Image::channels() const noexcept
     return channels_;
 }
 
-uint8_t *Image::operator()(int x, int y)
+uint8_t *Image::operator()(int x, int y) noexcept
 {
     return data_ + (y * width_ + x) * channels_;
 }
 
-const uint8_t *Image::operator()(int x, int y) const
+const uint8_t *Image::operator()(int x, int y) const noexcept
 {
     return data_ + (y * width_ + x) * channels_;
 }
 
-uint8_t *Image::operator[](int index)
+uint8_t *Image::operator[](int index) noexcept
 {
     return data_ + index;
 }
-const uint8_t *Image::operator[](int index) const
+const uint8_t *Image::operator[](int index) const noexcept
 {
     return data_ + index;
 }

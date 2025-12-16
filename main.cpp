@@ -4,7 +4,6 @@
 #include <iostream>
 
 #include "src/string_art/StringArt.h"
-
 #include "src/utils/io_utils.h"
 
 using namespace std::string_view_literals;

@@ -1,10 +1,12 @@
 #pragma once
 #include <cstdint>
-#include <algorithm>
-#include <cmath>
 
-template <typename T>
-constexpr static T lerp(const T a, const T b, const float t) noexcept
+constexpr static uint8_t lerp_fixed(const uint8_t a, const uint8_t b, const uint16_t factor_t) noexcept
 {
-    return static_cast<T>(a * t + b * (1.f - t));
+    constexpr int FIXED_POINT_SHIFT = 16;
+    constexpr uint32_t FIXED_POINT_BASE = 1 << FIXED_POINT_SHIFT;
+    constexpr uint32_t ROUNDING_ADDEND = 1 << (FIXED_POINT_SHIFT - 1);
+
+    const uint32_t result = a * factor_t + b * (FIXED_POINT_BASE - factor_t);
+    return static_cast<uint8_t>((result + ROUNDING_ADDEND) >> FIXED_POINT_SHIFT);
 }

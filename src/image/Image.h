@@ -30,7 +30,7 @@ public:
 
     Image calculateEdges() const;
 
-    uint8_t *data() const;
+    uint8_t *data() const noexcept;
 
     int width() const noexcept;
 
@@ -38,11 +38,11 @@ public:
 
     int channels() const noexcept;
 
-    uint8_t *operator()(int x, int y);
-    const uint8_t *operator()(int x, int y) const;
+    uint8_t *operator()(int x, int y) noexcept;
+    const uint8_t *operator()(int x, int y) const noexcept;
 
-    uint8_t *operator[](int index);
-    const uint8_t *operator[](int index) const;
+    uint8_t *operator[](int index) noexcept;
+    const uint8_t *operator[](int index) const noexcept;
 
 private:
     int width_, height_, channels_;

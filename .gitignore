@@ -1,4 +1,5 @@
 build/
-./string_art
+./StringArt
+./StringArt.exe
 .vscode/
 .git/

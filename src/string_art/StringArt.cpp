@@ -125,6 +125,7 @@ std::vector<std::pair<Color, uint32_t>> StringArtGenerator::loadSequence(const s
 const Image &StringArtGenerator::rebuildFromSequence(const std::vector<std::pair<Color, uint32_t>> &sequences, const float alpha)
 {
     std::unordered_map<Color, int> colorToCurrentNail;
+    const uint16_t alpha_factor = static_cast<uint16_t>(std::lround(alpha * 65536.0f));
     for (const auto &entry : sequences)
     {
         const Color &color = entry.first;
@@ -142,7 +143,7 @@ const Image &StringArtGenerator::rebuildFromSequence(const std::vector<std::pair
             {
                 uint8_t *pixel = currentImage(p.x, p.y);
                 for (int i = 0; i < 3; ++i)
-                    pixel[i] = lerp<uint8_t>(color[i], pixel[i], alpha);
+                    pixel[i] = lerp_fixed(color[i], pixel[i], alpha_factor);
             }
         }
 
