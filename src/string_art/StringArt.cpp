@@ -113,10 +113,10 @@ std::vector<std::pair<Color, uint32_t>> StringArtGenerator::loadSequence(const s
 
     while (!fin.eof())
     {
-        int r, g, b, nailInd;
+        short r, g, b, nailInd;
         fin >> r >> g >> b >> nailInd;
 
-        sequences.emplace_back(Color{{(uint8_t)r, (uint8_t)g, (uint8_t)b}}, nailInd);
+        sequences.emplace_back(Color{{static_cast<uint8_t>(r), static_cast<uint8_t>(g), static_cast<uint8_t>(b)}}, nailInd);
     }
 
     return sequences;

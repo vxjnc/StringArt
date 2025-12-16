@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
     std::string_view outputSequence = "sequence.txt";
     int countNails = 300;
     int maxIterations = 4500;
-    int kDensity = 500;
+    float kDensity = 500.f;
     bool isLoadSequence = false;
     bool isApplySobel = false;
     float alpha = 0.15f;
@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
                       << "  --output-sequence <path>   Output sequence file (default: sequence.txt)\n"
                       << "  --count-nails <number>     Number of nails (default: 300)\n"
                       << "  --max-iterations <number>  Maximum iterations (default: 4500)\n"
-                      << "  --k-density <number>       Density parameter (default: 500)\n"
+                      << "  --k-density <number>       Density parameter (default: 500.0)\n"
                       << "  --load-sequence            Load existing sequence\n"
                       << "  --sobel                    Apply Sobel filter\n"
                       << "  --alpha <number>           Alpha blending value (default: 0.15)\n"
@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
         }
         else if (arg == "--k-density" && i + 1 < argc)
         {
-            kDensity = std::stoi(argv[++i]);
+            kDensity = std::stof(argv[++i]);
         }
         else if (arg == "--load-sequence")
         {

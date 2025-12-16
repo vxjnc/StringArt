@@ -18,9 +18,13 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 )
 
 target_compile_options(${PROJECT_NAME} PRIVATE 
-    -Wall 
-    -Wextra 
+    -Wall
+    -Wextra
     -Wpedantic
+    -Wold-style-cast
+    -Wconversion
+    -Wsign-conversion
+    -Weffc++
     -march=native 
     -mtune=native
 )

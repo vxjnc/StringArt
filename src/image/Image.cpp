@@ -171,15 +171,17 @@ Image Image::calculateEdges() const
         {
             for (int c = 0; c < channels_; ++c)
             {
-                int gx = (-1) * (*this)(x - 1, y - 1)[c] + 1 * (*this)(x + 1, y - 1)[c] +
-                         (-2) * (*this)(x - 1, y)[c] + 2 * (*this)(x + 1, y)[c] +
-                         (-1) * (*this)(x - 1, y + 1)[c] + 1 * (*this)(x + 1, y + 1)[c];
+                float gx = static_cast<float>(
+                    (-1) * (*this)(x - 1, y - 1)[c] + 1 * (*this)(x + 1, y - 1)[c] +
+                    (-2) * (*this)(x - 1, y)[c] + 2 * (*this)(x + 1, y)[c] +
+                    (-1) * (*this)(x - 1, y + 1)[c] + 1 * (*this)(x + 1, y + 1)[c]);
 
-                int gy = 1 * (*this)(x - 1, y + 1)[c] + 2 * (*this)(x, y + 1)[c] + 1 * (*this)(x + 1, y + 1)[c] +
-                         (-1) * (*this)(x - 1, y - 1)[c] - 2 * (*this)(x, y - 1)[c] - 1 * (*this)(x + 1, y - 1)[c];
+                float gy = static_cast<float>(
+                    1 * (*this)(x - 1, y + 1)[c] + 2 * (*this)(x, y + 1)[c] + 1 * (*this)(x + 1, y + 1)[c] +
+                    (-1) * (*this)(x - 1, y - 1)[c] - 2 * (*this)(x, y - 1)[c] - 1 * (*this)(x + 1, y - 1)[c]);
 
-                int grad = std::hypot(gx, gy);
-                edges(x, y)[c] = ~(std::clamp<long long>(grad - 50, 0, 255));
+                float grad = std::hypot(gx, gy);
+                edges(x, y)[c] = ~static_cast<uint8_t>(std::clamp(grad - 50.f, 0.f, 255.f));
             }
         }
     }

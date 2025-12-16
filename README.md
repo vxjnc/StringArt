@@ -46,7 +46,7 @@ You can view the full list of options by running the program with the -h or --he
 | --output-sequence <path> | Output sequence file. | sequence.txt |
 | --count-nails <number> | Number of nails (pegs) around the circle. | 300 |
 | --max-iterations <number> | Maximum number of lines (threads) to draw. | 4500
-| --k-density <number> | Density parameter, influencing line selection. | 500 |
+| --k-density <number> | Density parameter, influencing line selection. | 500.0 |
 | --alpha <number> | Alpha blending value for the drawn threads (controls line visibility). | 0.15 |
 | --colors "r:g:b;r:g:b..." | Custom colors in RGB format. (e.g., "0:0:0;255:255:255" for black and white). | (None/Internal default) |
 | --load-sequence | Load existing sequence from --input-sequence instead of calculating a new one. | (Flag) |
