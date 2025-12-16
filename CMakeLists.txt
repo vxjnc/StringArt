@@ -10,7 +10,15 @@ file(GLOB_RECURSE SOURCE_FILES
     "src/*.cpp"
 )
 
+include(FetchContent)
+FetchContent_Declare(
+ argparse
+ GIT_REPOSITORY https://github.com/p-ranav/argparse.git
+)
+FetchContent_MakeAvailable(argparse)
+
 add_executable(${PROJECT_NAME} main.cpp ${SOURCE_FILES})
+target_link_libraries(${PROJECT_NAME} PRIVATE argparse::argparse)
 
 target_include_directories(${PROJECT_NAME} PRIVATE
     .
@@ -23,8 +31,6 @@ target_compile_options(${PROJECT_NAME} PRIVATE
     -Wpedantic
     -Wold-style-cast
     -Wconversion
-    -Wsign-conversion
-    -Weffc++
     -march=native 
     -mtune=native
 )

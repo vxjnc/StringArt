@@ -6,16 +6,13 @@
 **StringArt** is a high-performance command-line tool written in C++ that transforms standard raster images into stunning representations of thread art (string art) by calculating the optimal sequence of threads (lines) between fixed points (pegs).
 
 ## ⚙️ Building the Project
-
-This project uses a standard `Makefile` for compilation.
-
 ### Prerequisites (Debian/Ubuntu)
 
-Ensure you have a C++ compiler and the `make` utility installed:
+Ensure you have a C++ compiler and the `CMake` utility installed:
 
 ```bash
 sudo apt update
-sudo apt install build-essential
+sudo apt install build-essential cmake
 ```
 
 ### Compilation
@@ -23,35 +20,38 @@ sudo apt install build-essential
 Navigate to the project's root directory and simply run:
 
 ```bash
-make
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build -- -j$(nproc)
 ```
 
-This command compiles the source files and generates the main executable file named `string_art`.
+This command compiles the source files and generates the main executable file named `StringArt`.
 
 ## 🚀 Usage
 
-The generated executable string_art processes images based on command-line arguments, specifying input, output, and processing parameters.
+The generated executable StringArt processes images based on command-line arguments, specifying input, output, and processing parameters.
 
 Command-Line Options
 
 You can view the full list of options by running the program with the -h or --help flag:
 
-./string_art -h
+```
+./StringArt -h
+Usage: StringArt.exe [--help] [--version] [--input-image VAR] [--output-image VAR] [--input-sequence VAR] [--output-sequence VAR] [--nails VAR] [--max-iterations VAR] [--k-density VAR] [--alpha VAR] [--load-sequence] [--sobel] [--colors VAR]
 
-| Option | Description | Default Value |
-| :---: | :---: | :---: |
-| --input-image <path> | Input image path. | input.png |
-| --output-image <path> | Output image path. | output.png |
-| --input-sequence <path> | Input sequence file. | sequence.txt |
-| --output-sequence <path> | Output sequence file. | sequence.txt |
-| --count-nails <number> | Number of nails (pegs) around the circle. | 300 |
-| --max-iterations <number> | Maximum number of lines (threads) to draw. | 4500
-| --k-density <number> | Density parameter, influencing line selection. | 500.0 |
-| --alpha <number> | Alpha blending value for the drawn threads (controls line visibility). | 0.15 |
-| --colors "r:g:b;r:g:b..." | Custom colors in RGB format. (e.g., "0:0:0;255:255:255" for black and white). | (None/Internal default) |
-| --load-sequence | Load existing sequence from --input-sequence instead of calculating a new one. | (Flag) |
-| --sobel | Apply the Sobel edge detection filter to the input image before processing. | (Flag) |
-| --help / -h | Show this help message. | |
+Optional arguments:
+  -h, --help              shows help message and exits 
+  -v, --version           prints version information and exits 
+  -ii, --input-image      Input image path. [nargs=0..1] [default: "input.png"]
+  -oi, --output-image     Output image path. [nargs=0..1] [default: "output.png"]
+  -is, --input-sequence   Input sequence file. [nargs=0..1] [default: "sequence.txt"]
+  -os, --output-sequence  Output sequence file. [nargs=0..1] [default: "sequence.txt"]
+  -n, --nails             Number of nails. [nargs=0..1] [default: 300]
+  -it, --max-iterations   Maximum iterations. [nargs=0..1] [default: 4500]
+  -kd, --k-density        Density parameter. [nargs=0..1] [default: 500]
+  -a, --alpha             Alpha blending value. [nargs=0..1] [default: 0.15]
+  -ls, --load-sequence    Load existing sequence instead of generating a new one. 
+  -s, --sobel             Apply Sobel filter to the input image before processing. 
+  -c, --colors            Custom colors in RGB format. [nargs=0..1] [default: "0:0:0;255:255:255;255:0:0;0:255:0;0:0:255;255:0:255;0:255:255;255:255:0"]
+```
 
 ### Basic Execution
 
@@ -63,8 +63,8 @@ Here are examples demonstrating how to generate different styles of String Art f
 
 | Input Image | Output Image | Command Executed |
 | :---: | :---: | :---: |
-| <img src="assets/input.png" width="256" height="256"> | <img src="assets/output.png" width="256" height="256"> | `./string_art --input-image assets/input.png --output-image assets/output.png` |
-| <img src="assets/input.png" width="256" height="256"> |<img src="assets/output-gray.png" width="256" height="256">  | `./string_art --input-image assets/input.png --output-image assets/output-gray.png --output-sequence sequence-gray.txt --colors "0:0:0"` |
+| <img src="assets/input.png" width="256" height="256"> | <img src="assets/output.png" width="256" height="256"> | `./StringArt -ii assets/input.png -oi assets/output.png` |
+| <img src="assets/input.png" width="256" height="256"> |<img src="assets/output-gray.png" width="256" height="256">  | `./StringArt -ii assets/input.png -oi assets/output-gray.png -os sequence-gray.txt -c "0:0:0"` |
 
 
 ## 📂 Project Structure

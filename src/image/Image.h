@@ -8,7 +8,7 @@ class Image
 public:
     Image();
 
-    Image(int w, int h, int c);
+    Image(int w, int h, uint8_t c);
 
     Image(const Image &other);
 
@@ -36,7 +36,7 @@ public:
 
     int height() const noexcept;
 
-    int channels() const noexcept;
+    uint8_t channels() const noexcept;
 
     uint8_t *operator()(int x, int y) noexcept;
     const uint8_t *operator()(int x, int y) const noexcept;
@@ -45,6 +45,7 @@ public:
     const uint8_t *operator[](int index) const noexcept;
 
 private:
-    int width_, height_, channels_;
+    int width_, height_;
+    uint8_t channels_;
     uint8_t *data_ = nullptr;
 };

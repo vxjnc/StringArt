@@ -18,9 +18,17 @@ public:
     Line *nextLine;
 
     Thread(const unsigned int startNail, const Color &col) noexcept
-        : currentNail(startNail), nextLine(nullptr), color(col)
-    {
-    }
+        : currentNail(startNail),
+          nextLine(nullptr),
+          color(col),
+          prevConnections({}) {}
+
+    Thread(const Thread &other)
+        : currentNail(other.currentNail),
+          nextLine(other.nextLine),
+          color(other.color),
+          currentDist(other.currentDist),
+          prevConnections(other.prevConnections) {}
 
     float getNextNailWeight(const std::vector<Point2s> &nails,
                             const Image &original,
@@ -106,7 +114,7 @@ public:
                              const float kDensity) const
     {
         int totalDiff = 0;
-        int totalDensity = 0;
+        size_t totalDensity = 0;
         const auto &pixels = line.getPixels();
 
         const int cur_w = current.width();
@@ -135,7 +143,7 @@ public:
             totalDensity += density[shift];
         }
 
-        return (totalDiff + kDensity * totalDensity) / static_cast<float>(pixels.size());
+        return (static_cast<float>(totalDiff) + kDensity * static_cast<float>(totalDensity)) / static_cast<float>(pixels.size());
     }
 
     Color getColor() const noexcept { return color; }

@@ -25,9 +25,9 @@ void StringArtGenerator::initializeNails(const int numNails, const short w, cons
     nails.reserve(numNails);
     for (int i = 0; i < numNails; ++i)
     {
-        const float angle = 2.f * std::numbers::pi_v<float> * i / numNails;
-        const short x = center.x + radiusW * std::cos(angle);
-        const short y = center.y + radiusH * std::sin(angle);
+        const float angle = 2.f * std::numbers::pi_v<float> * static_cast<float>(i) / static_cast<float>(numNails);
+        const short x = static_cast<short>(center.x + radiusW * std::cos(angle));
+        const short y = static_cast<short>(center.y + radiusH * std::sin(angle));
         nails.emplace_back(std::clamp<short>(x, 0, w - 1),
                            std::clamp<short>(y, 0, h - 1));
     }

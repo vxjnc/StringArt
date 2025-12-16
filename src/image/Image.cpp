@@ -14,7 +14,7 @@
 
 Image::Image() : width_(0), height_(0), channels_(3), data_(nullptr) {}
 
-Image::Image(int w, int h, int c) : width_(w), height_(h), channels_(c), data_(nullptr)
+Image::Image(int w, int h, uint8_t c) : width_(w), height_(h), channels_(c), data_(nullptr)
 {
     if (w <= 0 || h <= 0 || c <= 0)
         throw std::invalid_argument("Width, height, and channels must be positive values");
@@ -204,7 +204,7 @@ int Image::height() const noexcept
     return height_;
 }
 
-int Image::channels() const noexcept
+uint8_t Image::channels() const noexcept
 {
     return channels_;
 }
