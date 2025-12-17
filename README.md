@@ -12,7 +12,7 @@ Ensure you have a C++ compiler and the `CMake` utility installed:
 
 ```bash
 sudo apt update
-sudo apt install build-essential cmake
+sudo apt install build-essential cmake ocl-icd-opencl-dev
 ```
 
 ### Compilation
@@ -45,9 +45,9 @@ Optional arguments:
   -is, --input-sequence   Input sequence file. [nargs=0..1] [default: "sequence.txt"]
   -os, --output-sequence  Output sequence file. [nargs=0..1] [default: "sequence.txt"]
   -n, --nails             Number of nails. [nargs=0..1] [default: 300]
-  -it, --max-iterations   Maximum iterations. [nargs=0..1] [default: 4500]
+  -it, --max-iterations   Maximum iterations. [nargs=0..1] [default: 5000]
   -kd, --k-density        Density parameter. [nargs=0..1] [default: 500]
-  -a, --alpha             Alpha blending value. [nargs=0..1] [default: 0.15]
+  -a, --alpha             Alpha blending value. [nargs=0..1] [default: 0.13]
   -ls, --load-sequence    Load existing sequence instead of generating a new one. 
   -s, --sobel             Apply Sobel filter to the input image before processing. 
   -c, --colors            Custom colors in RGB format. [nargs=0..1] [default: "0:0:0;255:255:255;255:0:0;0:255:0;0:0:255;255:0:255;0:255:255;255:255:0"]
@@ -74,6 +74,7 @@ Here are examples demonstrating how to generate different styles of String Art f
 ├── assets/                  # Example input/output images for documentation
 ├── build/                   # Compiled object files (ignored by Git)
 ├── include/                 # Third-party headers (stb)
+├── kernels/                 # Kernel source files
 ├── src/                     # C++ Source files
 ├── .gitignore               # List of files to ignore
 ├── LICENSE                  # MIT License details

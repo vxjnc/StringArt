@@ -2,6 +2,7 @@
 
 #include <string_view>
 #include <cstdint>
+#include <vector>
 
 class Image
 {

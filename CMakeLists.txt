@@ -16,9 +16,10 @@ FetchContent_Declare(
  GIT_REPOSITORY https://github.com/p-ranav/argparse.git
 )
 FetchContent_MakeAvailable(argparse)
+find_package(OpenCL REQUIRED)
 
 add_executable(${PROJECT_NAME} main.cpp ${SOURCE_FILES})
-target_link_libraries(${PROJECT_NAME} PRIVATE argparse::argparse)
+target_link_libraries(${PROJECT_NAME} PRIVATE argparse::argparse OpenCL::OpenCL)
 
 target_include_directories(${PROJECT_NAME} PRIVATE
     .

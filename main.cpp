@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
         .help("Number of nails.");
 
     program.add_argument("-it", "--max-iterations")
-        .default_value(4500)
+        .default_value(5000)
         .scan<'i', int>()
         .help("Maximum iterations.");
 
@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
         .help("Density parameter.");
 
     program.add_argument("-a", "--alpha")
-        .default_value(0.15f)
+        .default_value(0.13f)
         .scan<'g', float>()
         .help("Alpha blending value.");
 
@@ -153,12 +153,15 @@ int main(int argc, char *argv[])
     }
     else
     {
-        auto result = generator.generate(alpha);
+        generator.generate(alpha);
 
-        result.first.save(outputImage);
+        Image result = generator.getResultImage();
+        const auto sequence = generator.getSequence();
+
+        result.save(outputImage);
 
         std::ofstream fout(outputSequence.data());
-        for (auto &&[color, nailInd] : result.second)
+        for (auto &&[color, nailInd] : sequence)
         {
             short r = color[0];
             short g = color[1];

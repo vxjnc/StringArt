@@ -1,21 +1,8 @@
 #include "StringArt.h"
 #include <cmath>
 #include <fstream>
+#include <iostream>
 #include <numbers>
-
-void StringArtGenerator::precomputeAllLines()
-{
-    const int numNails = nails.size();
-    lineCache.resize(numNails);
-    for (int i = 0; i < numNails; ++i)
-    {
-        lineCache[i].resize(i + 1);
-        for (int j = 0; j < i + 1; ++j)
-        {
-            lineCache[i][j] = std::make_unique<Line>(nails[i], nails[j]);
-        }
-    }
-}
 
 void StringArtGenerator::initializeNails(const int numNails, const short w, const short h)
 {
@@ -42,64 +29,68 @@ StringArtGenerator::StringArtGenerator(const Image &input,
                                        std::mt19937 &gen)
     : maxIter(maxConnections), kDensity(kDensity)
 {
-    originalImage = input;
-
+    targetImage = input;
     if (isApplySobel)
     {
-        Image edges(originalImage.calculateEdges());
+        Image edges(targetImage.calculateEdges());
         for (int i = 0; i < edges.height() * edges.width(); ++i)
         {
-            for (int j = 0; j < 3; ++j)
-                originalImage[i * 3][j] &= edges[i][j];
+            for (int j = 0; j < targetImage.channels(); ++j)
+                targetImage[i * targetImage.channels()][j] &= edges[i][j];
         }
     }
 
-    originalImage.resize(512, 512);
+    targetImage.resize(512, 512);
 
-    currentImage = Image(originalImage.width(), originalImage.height(), originalImage.channels());
+    currentImage = Image(targetImage.width(), targetImage.height(), targetImage.channels());
 
     density.resize(currentImage.width() * currentImage.height(), 0);
 
     initializeNails(numNails, currentImage.width(), currentImage.height());
-    precomputeAllLines();
 
     std::uniform_int_distribution<> dis(0, numNails - 1);
     for (auto &&color : threadColors)
-        threads.emplace_back(std::make_unique<Thread>(dis(gen), color));
+        threads.emplace_back(color, dis(gen));
+
+    ocl = std::make_unique<OpenCLManager>(512, 512, numNails);
 }
 
-std::pair<Image, std::vector<std::pair<Color, uint32_t>>> StringArtGenerator::generate(const float alpha)
+void StringArtGenerator::generate(const float alpha)
 {
+    ocl->setupResources(targetImage, currentImage, density, nails, threads.size(), maxIter);
+    ocl->loadProgram("kernels/kernel.cl");
+    ocl->updateThreads(threads);
+    ocl->setupArgs(alpha, kDensity);
+
+    for (size_t i = 0; i < maxIter; ++i)
+    {
+        ocl->runScores();
+        ocl->runMinReduction();
+        ocl->runDraw(i);
+    }
+    ocl->finish();
+
+    ocl->downloadResult(currentImage);
+
+    std::vector<uint32_t> rawSeq = ocl->downloadSequence(maxIter);
     std::vector<std::pair<Color, uint32_t>> sequence;
     sequence.reserve(maxIter);
-
-    for (size_t renderIter = 0; renderIter < maxIter; ++renderIter)
+    for (size_t i = 0; i < maxIter; ++i)
     {
-        float bestScore = std::numeric_limits<float>::max();
-        Thread *bestThread = nullptr;
-
-        for (auto &thread : threads)
-        {
-            const float score = thread->getNextNailWeight(nails, originalImage, currentImage, lineCache, alpha, density, kDensity);
-
-            if (score < bestScore)
-            {
-                bestScore = score;
-                bestThread = thread.get();
-            }
-        }
-
-        if (bestThread)
-        {
-            sequence.emplace_back(bestThread->getColor(), bestThread->currentNail);
-
-            bestThread->addLineToImage(currentImage, density, alpha);
-            bestThread->moveToNextNail();
-        }
+        uint32_t tIdx = rawSeq[i * 2];
+        uint32_t nIdx = rawSeq[i * 2 + 1];
+        sequence.emplace_back(threads[tIdx].color, nIdx);
     }
-
-    return {std::move(currentImage), std::move(sequence)};
 }
+
+Image StringArtGenerator::getResultImage()
+{
+    Image out(targetImage.width(), targetImage.height(), 4);
+    ocl->downloadResult(out);
+    return out;
+}
+
+const std::vector<std::pair<Color, uint32_t>> &StringArtGenerator::getSequence() const { return sequence; }
 
 std::vector<std::pair<Color, uint32_t>> StringArtGenerator::loadSequence(const std::string_view filename)
 {
@@ -125,7 +116,6 @@ std::vector<std::pair<Color, uint32_t>> StringArtGenerator::loadSequence(const s
 const Image &StringArtGenerator::rebuildFromSequence(const std::vector<std::pair<Color, uint32_t>> &sequences, const float alpha)
 {
     std::unordered_map<Color, int> colorToCurrentNail;
-    const uint16_t alpha_factor = static_cast<uint16_t>(std::lround(alpha * 65536.0f));
     for (const auto &entry : sequences)
     {
         const Color &color = entry.first;
@@ -138,13 +128,13 @@ const Image &StringArtGenerator::rebuildFromSequence(const std::vector<std::pair
             const int a = std::min(prevNail, currentNail);
             const int b = std::max(prevNail, currentNail);
 
-            const Line &line = *lineCache[a][b];
-            for (const auto &p : line.getPixels())
-            {
-                uint8_t *pixel = currentImage(p.x, p.y);
-                for (int i = 0; i < 3; ++i)
-                    pixel[i] = lerp_fixed(color[i], pixel[i], alpha_factor);
-            }
+            // const Line &line = *lineCache[a][b]; TODO сделать через OpenCL
+            // for (const auto &p : line.getPixels())
+            // {
+            //     uint8_t *pixel = currentImage(p.x, p.y);
+            //     for (int i = 0; i < 3; ++i)
+            //         pixel[i] = lerp(color[i], pixel[i], alpha);
+            // }
         }
 
         colorToCurrentNail[color] = currentNail;

@@ -6,25 +6,10 @@
 
 #include "src/image/Image.h"
 #include "src/geometry/Point2.h"
-#include "src/geometry/Line.h"
-#include "src/string_art/Therad.h"
+#include "src/compute/OpenCLManager.h"
 
 class StringArtGenerator
 {
-private:
-    Image originalImage;
-    Image currentImage;
-    std::vector<uint16_t> density;
-    std::vector<Point2s> nails;
-    std::vector<std::unique_ptr<Thread>> threads;
-    std::vector<std::vector<std::unique_ptr<Line>>> lineCache;
-    size_t maxIter;
-    float kDensity;
-
-    void precomputeAllLines();
-
-    void initializeNails(const int numNails, const short w, const short h);
-
 public:
     StringArtGenerator(const Image &input,
                        const int numNails,
@@ -34,9 +19,24 @@ public:
                        const bool isApplySobel,
                        std::mt19937 &gen);
 
-    std::pair<Image, std::vector<std::pair<Color, uint32_t>>> generate(const float alpha);
+    void generate(const float alpha);
+
+    Image getResultImage();
+    const std::vector<std::pair<Color, uint32_t>> &getSequence() const;
 
     std::vector<std::pair<Color, uint32_t>> loadSequence(const std::string_view filename);
-
     const Image &rebuildFromSequence(const std::vector<std::pair<Color, uint32_t>> &sequences, const float alpha);
+
+private:
+    void initializeNails(const int numNails, const short w, const short h);
+
+    Image targetImage;
+    Image currentImage;
+    std::vector<std::pair<Color, uint32_t>> sequence;
+    std::vector<uint16_t> density;
+    std::vector<Point2s> nails;
+    std::vector<Thread> threads;
+    size_t maxIter;
+    float kDensity;
+    std::unique_ptr<OpenCLManager> ocl;
 };

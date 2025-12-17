@@ -12,7 +12,7 @@
 #include <algorithm>
 #include <cmath>
 
-Image::Image() : width_(0), height_(0), channels_(3), data_(nullptr) {}
+Image::Image() : width_(0), height_(0), channels_(4), data_(nullptr) {}
 
 Image::Image(int w, int h, uint8_t c) : width_(w), height_(h), channels_(c), data_(nullptr)
 {
@@ -114,7 +114,7 @@ void Image::clear()
 void Image::load(std::string_view filename)
 {
     clear();
-    int desired_channels = 3;
+    int desired_channels = 4;
     data_ = stbi_load(filename.data(), &width_, &height_, nullptr, desired_channels);
     if (!data_)
     {
