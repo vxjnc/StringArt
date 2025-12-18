@@ -12,10 +12,10 @@ class StringArtGenerator
 {
 public:
     StringArtGenerator(const Image &input,
+                       std::span<int> imageSize,
                        const int nailsCount,
                        const int maxConnections,
                        const std::vector<Color> &threadColors,
-                       const bool isApplySobel,
                        std::mt19937 &gen);
 
     void generate(const float alpha, const float kDensity);

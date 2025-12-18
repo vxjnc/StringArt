@@ -35,7 +35,7 @@ You can view the full list of options by running the program with the -h or --he
 
 ```
 ./StringArt -h
-Usage: StringArt.exe [--help] [--version] [--input-image VAR] [--output-image VAR] [--input-sequence VAR] [--output-sequence VAR] [--nails VAR] [--max-iterations VAR] [--k-density VAR] [--alpha VAR] [--load-sequence] [--sobel] [--colors VAR]
+Usage: StringArt.exe [--help] [--version] [--input-image VAR] [--output-image VAR] [--input-sequence VAR] [--output-sequence VAR] [--nails VAR] [--max-iterations VAR] [--k-density VAR] [--alpha VAR] [--load-sequence] [--resize VAR...] [--colors VAR]
 
 Optional arguments:
   -h, --help              shows help message and exits 
@@ -49,7 +49,7 @@ Optional arguments:
   -kd, --k-density        Density parameter. [nargs=0..1] [default: 500]
   -a, --alpha             Alpha blending value. [nargs=0..1] [default: 0.13]
   -ls, --load-sequence    Load existing sequence instead of generating a new one. 
-  -s, --sobel             Apply Sobel filter to the input image before processing. 
+  -rs, --resize           Resize image to given width and height. [nargs=0..2] [default: {512 512}]
   -c, --colors            Custom colors in RGB format. [nargs=0..1] [default: "0:0:0;255:255:255;255:0:0;0:255:0;0:0:255;255:0:255;0:255:255;255:255:0"]
 ```
 

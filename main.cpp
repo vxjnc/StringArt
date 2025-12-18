@@ -47,51 +47,69 @@ std::vector<Color> parse_colors(const std::string &colors_str)
 
 int main(int argc, char *argv[])
 {
+    std::string inputImage;
+    std::string outputImage;
+    std::string inputSequence;
+    std::string outputSequence;
+    int countNails;
+    int maxIterations;
+    float kDensity;
+    float alpha;
+    bool isLoadSequence;
+    std::vector<int> sizeImage;
+
     argparse::ArgumentParser program("StringArt.exe");
 
     program.add_argument("-ii", "--input-image")
         .default_value("input.png"s)
+        .store_into(inputImage)
         .help("Input image path.");
 
     program.add_argument("-oi", "--output-image")
         .default_value("output.png"s)
+        .store_into(outputImage)
         .help("Output image path.");
 
     program.add_argument("-is", "--input-sequence")
         .default_value("sequence.txt"s)
+        .store_into(inputSequence)
         .help("Input sequence file.");
 
     program.add_argument("-os", "--output-sequence")
         .default_value("sequence.txt"s)
+        .store_into(outputSequence)
         .help("Output sequence file.");
 
     program.add_argument("-n", "--nails")
         .default_value(300)
-        .scan<'i', int>()
+        .store_into(countNails)
         .help("Number of nails.");
 
     program.add_argument("-it", "--max-iterations")
         .default_value(5000)
-        .scan<'i', int>()
+        .store_into(maxIterations)
         .help("Maximum iterations.");
 
     program.add_argument("-kd", "--k-density")
         .default_value(500.f)
-        .scan<'g', float>()
+        .store_into(kDensity)
         .help("Density parameter.");
 
     program.add_argument("-a", "--alpha")
         .default_value(0.13f)
-        .scan<'g', float>()
+        .store_into(alpha)
         .help("Alpha blending value.");
 
     program.add_argument("-ls", "--load-sequence")
         .flag()
+        .store_into(isLoadSequence)
         .help("Load existing sequence instead of generating a new one.");
 
-    program.add_argument("-s", "--sobel")
-        .flag()
-        .help("Apply Sobel filter to the input image before processing.");
+    program.add_argument("-rs", "--resize")
+        .nargs(2)
+        .default_value(std::vector<int>{512, 512})
+        .store_into(sizeImage)
+        .help("Resize image to given width and height.");
 
     program.add_argument("-c", "--colors")
         .default_value("0:0:0;255:255:255;255:0:0;0:255:0;0:0:255;255:0:255;0:255:255;255:255:0"s)
@@ -107,19 +125,6 @@ int main(int argc, char *argv[])
         std::cerr << program;
         return 1;
     }
-
-    std::string inputImage = program.get<std::string>("--input-image"sv);
-    std::string outputImage = program.get<std::string>("--output-image"sv);
-    std::string inputSequence = program.get<std::string>("--input-sequence"sv);
-    std::string outputSequence = program.get<std::string>("--output-sequence"sv);
-
-    const int countNails = program.get<int>("--nails"sv);
-    const int maxIterations = program.get<int>("--max-iterations"sv);
-    const float kDensity = program.get<float>("--k-density"sv);
-    const float alpha = program.get<float>("--alpha"sv);
-
-    const bool isLoadSequence = program.get<bool>("--load-sequence"sv);
-    const bool isApplySobel = program.get<bool>("--sobel"sv);
 
     std::vector<Color> colors;
     try
@@ -138,10 +143,10 @@ int main(int argc, char *argv[])
     std::mt19937 gen(std::random_device{}());
     StringArtGenerator generator(
         input,
+        sizeImage,
         countNails,
         maxIterations,
         colors,
-        isApplySobel,
         gen);
 
     if (isLoadSequence)

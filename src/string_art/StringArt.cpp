@@ -21,14 +21,14 @@ void StringArtGenerator::initializeNails(const int nailsCount, const short w, co
 }
 
 StringArtGenerator::StringArtGenerator(const Image &input,
+                                       std::span<int> imageSize,
                                        const int nailsCount,
                                        const int maxConnections,
                                        const std::vector<Color> &threadColors,
-                                       const bool isApplySobel,
                                        std::mt19937 &gen) : maxIter(maxConnections)
 {
     targetImage = input;
-    targetImage.resize(512, 512);
+    targetImage.resize(imageSize[0], imageSize[1]);
 
     currentImage = Image(targetImage.width(), targetImage.height(), targetImage.channels());
 
