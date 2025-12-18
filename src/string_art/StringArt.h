@@ -12,14 +12,13 @@ class StringArtGenerator
 {
 public:
     StringArtGenerator(const Image &input,
-                       const int numNails,
+                       const int nailsCount,
                        const int maxConnections,
                        const std::vector<Color> &threadColors,
-                       const float kDensity,
                        const bool isApplySobel,
                        std::mt19937 &gen);
 
-    void generate(const float alpha);
+    void generate(const float alpha, const float kDensity);
 
     Image getResultImage();
     const std::vector<std::pair<Color, uint32_t>> &getSequence() const;
@@ -28,7 +27,7 @@ public:
     const Image &rebuildFromSequence(const std::vector<std::pair<Color, uint32_t>> &sequences, const float alpha);
 
 private:
-    void initializeNails(const int numNails, const short w, const short h);
+    void initializeNails(const int nailsCount, const short w, const short h);
 
     Image targetImage;
     Image currentImage;
@@ -37,6 +36,5 @@ private:
     std::vector<Point2s> nails;
     std::vector<Thread> threads;
     size_t maxIter;
-    float kDensity;
     std::unique_ptr<OpenCLManager> ocl;
 };

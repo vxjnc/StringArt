@@ -1,3 +1,5 @@
+#pragma once
+
 #include <CL/opencl.hpp>
 #include <vector>
 #include <string_view>
@@ -51,15 +53,13 @@ private:
         cl::Buffer sequence;
     } buffers;
 
-    uint32_t width, height, numNails;
-    int threadsCount = 0;
-    std::vector<GpuThread> hostThreads;
+    uint32_t width, height, nailsCount, threadsCount = 0;
 
     size_t maxWorkGroupSize;
 
 public:
-    OpenCLManager(uint32_t w, uint32_t h, uint32_t nailsCount)
-        : width(w), height(h), numNails(nailsCount)
+    OpenCLManager(uint32_t w, uint32_t h)
+        : width(w), height(h)
     {
         initDevice();
     }
@@ -72,11 +72,12 @@ public:
             throw std::runtime_error("No OpenCL platforms found");
 
         std::vector<cl::Device> devices;
-        platforms[0].getDevices(CL_DEVICE_TYPE_GPU, &devices);
+        platforms[0].getDevices(CL_DEVICE_TYPE_ALL, &devices);
         if (devices.empty())
-            throw std::runtime_error("No GPU devices found");
+            throw std::runtime_error("No devices found");
 
         context = cl::Context(devices[0]);
+
         queue = cl::CommandQueue(context, devices[0]);
 
         devices[0].getInfo(CL_DEVICE_MAX_WORK_GROUP_SIZE, &maxWorkGroupSize);
@@ -87,31 +88,43 @@ public:
     void setupResources(const Image &orig, const Image &current,
                         std::span<const uint16_t> density,
                         std::span<const Point2s> nails,
-                        int threadsSize, int maxIter)
+                        std::span<const Thread> threads,
+                        int maxIter)
     {
         if (orig.channels() != 4 || current.channels() != 4)
             throw std::runtime_error("Images must be RGBA (4 channels)");
+        if (orig.width() != current.width() || orig.height() != current.height())
+            throw std::runtime_error("Images must be the same size");
 
-        threadsCount = threadsSize;
-        hostThreads.reserve(threadsSize);
+        threadsCount = threads.size();
+        nailsCount = nails.size();
 
         auto createBuffer = [&](cl_mem_flags flags, size_t size, void *ptr = nullptr)
         {
-            return cl::Buffer(context, flags | (ptr ? CL_MEM_COPY_HOST_PTR : 0), size, ptr);
+            cl_int err;
+            cl::Buffer buf(context, flags | (ptr ? CL_MEM_COPY_HOST_PTR : 0), size, ptr, &err);
+            if (err != CL_SUCCESS)
+            {
+                throw std::runtime_error("Failed to create OpenCL buffer, error code: " + std::to_string(err));
+            }
+            return buf;
         };
-        std::vector<cl_ushort2> nailsData;
-        nailsData.reserve(nails.size());
-        for (const auto &p : nails)
-            nailsData.push_back({(cl_ushort)p.x, (cl_ushort)p.y});
 
-        buffers.imgOriginal = createBuffer(CL_MEM_READ_ONLY, width * height * 4, (void *)orig.data());
-        buffers.imgCurrent = createBuffer(CL_MEM_READ_WRITE, width * height * 4, (void *)current.data());
-        buffers.density = createBuffer(CL_MEM_READ_WRITE, density.size_bytes(), (void *)density.data());
-        buffers.scores = createBuffer(CL_MEM_READ_WRITE, numNails * threadsSize * sizeof(float));
-        buffers.threads = createBuffer(CL_MEM_READ_WRITE, threadsSize * sizeof(GpuThread));
+        buffers.imgOriginal = createBuffer(CL_MEM_READ_ONLY, width * height * orig.channels(), static_cast<void *>(const_cast<unsigned char *>(orig.data())));
+
+        buffers.imgCurrent = createBuffer(CL_MEM_READ_WRITE, width * height * current.channels(), static_cast<void *>(const_cast<unsigned char *>(current.data())));
+
+        buffers.density = createBuffer(CL_MEM_READ_WRITE, density.size_bytes(), static_cast<void *>(const_cast<uint16_t *>(density.data())));
+
+        buffers.scores = createBuffer(CL_MEM_READ_WRITE, nails.size() * threads.size() * sizeof(float));
+
+        buffers.threads = createBuffer(CL_MEM_READ_WRITE, threads.size() * sizeof(threads[0]), static_cast<void *>(const_cast<Thread *>(threads.data())));
+
         buffers.bestResult = createBuffer(CL_MEM_READ_WRITE, 2 * sizeof(cl_uint));
+
         buffers.sequence = createBuffer(CL_MEM_READ_WRITE, maxIter * 2 * sizeof(cl_uint));
-        buffers.nails = createBuffer(CL_MEM_READ_ONLY, nailsData.size() * sizeof(cl_ushort2), nailsData.data());
+
+        buffers.nails = createBuffer(CL_MEM_READ_ONLY, nails.size() * sizeof(nails[0]), static_cast<void *>(const_cast<Point2s *>(nails.data())));
     }
 
     void loadProgram(std::string_view filename)
@@ -129,48 +142,52 @@ public:
                                      program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(context.getInfo<CL_CONTEXT_DEVICES>()[0]));
         }
 
-        kernels.scores = cl::Kernel(program, "calculate_all_threads_scores");
-        kernels.findMin = cl::Kernel(program, "find_min_reduction");
+        kernels.scores = cl::Kernel(program, "calculate_scores");
+        kernels.findMin = cl::Kernel(program, "find_min");
         kernels.draw = cl::Kernel(program, "draw_line");
     }
 
     void setupArgs(float alpha, float kDensity)
     {
+        int argInd = 0;
+
         auto &ks = kernels.scores;
-        ks.setArg(0, buffers.imgOriginal);
-        ks.setArg(1, buffers.imgCurrent);
-        ks.setArg(2, buffers.nails);
-        ks.setArg(3, buffers.density);
-        ks.setArg(4, buffers.scores);
-        ks.setArg(5, buffers.threads);
-        ks.setArg(6, (cl_uint)threadsCount);
-        ks.setArg(7, (cl_uint)numNails);
-        ks.setArg(8, (cl_uint)width);
-        ks.setArg(9, alpha);
-        ks.setArg(10, kDensity);
+        ks.setArg(argInd++, buffers.imgOriginal);
+        ks.setArg(argInd++, buffers.imgCurrent);
+        ks.setArg(argInd++, buffers.nails);
+        ks.setArg(argInd++, buffers.density);
+        ks.setArg(argInd++, buffers.scores);
+        ks.setArg(argInd++, buffers.threads);
+        ks.setArg(argInd++, static_cast<cl_uint>(threadsCount));
+        ks.setArg(argInd++, static_cast<cl_uint>(nailsCount));
+        ks.setArg(argInd++, static_cast<cl_uint>(width));
+        ks.setArg(argInd++, alpha);
+        ks.setArg(argInd++, kDensity);
 
+        argInd = 0;
         auto &km = kernels.findMin;
-        km.setArg(0, buffers.scores);
-        km.setArg(1, buffers.bestResult);
-        km.setArg(2, (cl_uint)(numNails * threadsCount));
-        km.setArg(3, (cl_uint)numNails);
-        km.setArg(4, cl::Local(maxWorkGroupSize * sizeof(float)));
-        km.setArg(5, cl::Local(maxWorkGroupSize * sizeof(cl_uint)));
+        km.setArg(argInd++, buffers.scores);
+        km.setArg(argInd++, buffers.bestResult);
+        km.setArg(argInd++, static_cast<cl_uint>(nailsCount * threadsCount));
+        km.setArg(argInd++, static_cast<cl_uint>(nailsCount));
+        km.setArg(argInd++, cl::Local(maxWorkGroupSize * sizeof(float)));
+        km.setArg(argInd++, cl::Local(maxWorkGroupSize * sizeof(cl_uint)));
 
+        argInd = 0;
         auto &kd = kernels.draw;
-        kd.setArg(0, buffers.imgCurrent);
-        kd.setArg(1, buffers.density);
-        kd.setArg(2, buffers.nails);
-        kd.setArg(3, buffers.threads);
-        kd.setArg(4, buffers.bestResult);
-        kd.setArg(5, (cl_uint)width);
-        kd.setArg(6, alpha);
-        kd.setArg(7, buffers.sequence);
+        kd.setArg(argInd++, buffers.imgCurrent);
+        kd.setArg(argInd++, buffers.density);
+        kd.setArg(argInd++, buffers.nails);
+        kd.setArg(argInd++, buffers.threads);
+        kd.setArg(argInd++, buffers.bestResult);
+        kd.setArg(argInd++, static_cast<cl_uint>(width));
+        kd.setArg(argInd++, alpha);
+        kd.setArg(argInd++, buffers.sequence);
     }
 
     void runScores()
     {
-        queue.enqueueNDRangeKernel(kernels.scores, cl::NullRange, cl::NDRange(numNails, threadsCount));
+        queue.enqueueNDRangeKernel(kernels.scores, cl::NullRange, cl::NDRange(nailsCount, threadsCount));
     }
 
     void runMinReduction()
@@ -184,15 +201,6 @@ public:
         queue.enqueueNDRangeKernel(kernels.draw, cl::NullRange, cl::NDRange(width));
     }
 
-    void updateThreads(std::span<const Thread> threads)
-    {
-        hostThreads.clear();
-        for (const auto &t : threads)
-            hostThreads.emplace_back(t.color, t.currentNail);
-
-        queue.enqueueWriteBuffer(buffers.threads, CL_TRUE, 0, hostThreads.size() * sizeof(GpuThread), hostThreads.data());
-    }
-
     void downloadResult(Image &out)
     {
         queue.enqueueReadBuffer(buffers.imgCurrent, CL_TRUE, 0, width * height * 4, out.data());
@@ -200,10 +208,8 @@ public:
 
     void finish() { queue.finish(); }
 
-    std::vector<uint32_t> downloadSequence(int maxIter)
+    void downloadSequence(std::vector<uint32_t> &hostSeq)
     {
-        std::vector<uint32_t> hostSeq(maxIter * 2);
-        queue.enqueueReadBuffer(buffers.sequence, CL_TRUE, 0, hostSeq.size() * sizeof(uint32_t), hostSeq.data());
-        return hostSeq;
+        queue.enqueueReadBuffer(buffers.sequence, CL_TRUE, 0, hostSeq.size() * sizeof(cl_uint), hostSeq.data());
     }
 };

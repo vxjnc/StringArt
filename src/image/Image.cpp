@@ -3,10 +3,9 @@
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
-
-#include "include/stb/stb_image.h"
-#include "include/stb/stb_image_write.h"
-#include "include/stb/stb_image_resize.h"
+#include "stb/stb_image.h"
+#include "stb/stb_image_write.h"
+#include "stb/stb_image_resize.h"
 
 #include <stdexcept>
 #include <algorithm>
@@ -160,33 +159,6 @@ void Image::resize(int new_width, int new_height)
     data_ = resized_data;
     width_ = new_width;
     height_ = new_height;
-}
-
-Image Image::calculateEdges() const
-{
-    Image edges(width_, height_, channels_);
-    for (int y = 1; y < height_ - 1; ++y)
-    {
-        for (int x = 1; x < width_ - 1; ++x)
-        {
-            for (int c = 0; c < channels_; ++c)
-            {
-                float gx = static_cast<float>(
-                    (-1) * (*this)(x - 1, y - 1)[c] + 1 * (*this)(x + 1, y - 1)[c] +
-                    (-2) * (*this)(x - 1, y)[c] + 2 * (*this)(x + 1, y)[c] +
-                    (-1) * (*this)(x - 1, y + 1)[c] + 1 * (*this)(x + 1, y + 1)[c]);
-
-                float gy = static_cast<float>(
-                    1 * (*this)(x - 1, y + 1)[c] + 2 * (*this)(x, y + 1)[c] + 1 * (*this)(x + 1, y + 1)[c] +
-                    (-1) * (*this)(x - 1, y - 1)[c] - 2 * (*this)(x, y - 1)[c] - 1 * (*this)(x + 1, y - 1)[c]);
-
-                float grad = std::hypot(gx, gy);
-                edges(x, y)[c] = ~static_cast<uint8_t>(std::clamp(grad - 50.f, 0.f, 255.f));
-            }
-        }
-    }
-
-    return edges;
 }
 
 uint8_t *Image::data() const noexcept

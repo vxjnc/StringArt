@@ -1,7 +1,7 @@
 # StringArt: Image to Thread Art Generator
 
 **Author:** [vxjnc](https://github.com/vxjnc)
-**License:** [MIT License](LICENSE)
+**License:** [GPL-3.0 License](LICENSE)
 
 **StringArt** is a high-performance command-line tool written in C++ that transforms standard raster images into stunning representations of thread art (string art) by calculating the optimal sequence of threads (lines) between fixed points (pegs).
 

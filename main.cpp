@@ -141,7 +141,6 @@ int main(int argc, char *argv[])
         countNails,
         maxIterations,
         colors,
-        kDensity,
         isApplySobel,
         gen);
 
@@ -153,7 +152,7 @@ int main(int argc, char *argv[])
     }
     else
     {
-        generator.generate(alpha);
+        generator.generate(alpha, kDensity);
 
         Image result = generator.getResultImage();
         const auto sequence = generator.getSequence();

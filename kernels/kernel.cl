@@ -4,28 +4,28 @@ typedef struct __attribute__ ((aligned (16))) {
     uint padding[2];
 } GpuThread;
 
-kernel void calculate_all_threads_scores(
+kernel void calculate_scores(
     global const uchar4* original,
     global const uchar4* current,
     global const ushort2* nails,
     global const ushort* density,
     global float* output_scores,
     global const GpuThread* threads,
-    const uint num_threads,
-    const uint num_nails,
+    const uint count_threads,
+    const uint count_nails,
     const uint width,
     const float alpha,
-    const float kDensity) 
+    const float kDensity)
 {
     int target_nail = get_global_id(0);
     int thread_idx = get_global_id(1);
 
-    if (thread_idx >= num_threads || target_nail >= num_nails) return;
+    if (thread_idx >= count_threads || target_nail >= count_nails) return;
 
     GpuThread t = threads[thread_idx];
 
     if (target_nail == t.currentNail) {
-        output_scores[thread_idx * num_nails + target_nail] = 1e30f;
+        output_scores[thread_idx * count_nails + target_nail] = 1e30f;
         return;
     }
 
@@ -57,7 +57,8 @@ kernel void calculate_all_threads_scores(
         const float4 diff_curr = orig_f - curr_f;
 
         float4 val = (diff - diff_curr) * (diff + diff_curr);
-        total_diff += fmin(val.x, 0.0f) + fmin(val.y, 0.0f) + fmin(val.z, 0.0f);
+        float2 line_vec = normalize((float2)(end.x - start.x, end.y - start.y));
+        total_diff += (fmin(val.x, 0.0f) + fmin(val.y, 0.0f) + fmin(val.z, 0.0f));
         total_density += (float)density[idx];
         length++;
 
@@ -68,14 +69,13 @@ kernel void calculate_all_threads_scores(
         if (e2 <  dy) { err += dx; y += sy; }
     }
 
-    output_scores[thread_idx * num_nails + target_nail] = ((float)total_diff + kDensity * (float)total_density) / (float)length;
+    output_scores[thread_idx * count_nails + target_nail] = ((float)total_diff + kDensity * (float)total_density) / (float)length;
 }
-
-kernel void find_min_reduction(
+kernel void find_min(
     global const float* scores,
     global uint* best_result,
     const uint total_elements,
-    const uint num_nails,
+    const uint count_nails,
     local float* local_min_values,
     local uint* local_min_indices) 
 {
@@ -110,12 +110,10 @@ kernel void find_min_reduction(
         barrier(CLK_LOCAL_MEM_FENCE);
     }
 
-    // 3. Записываем результат (только первый поток группы)
-    // В данном упрощенном примере мы предполагаем, что запускаем только одну группу
     if (lid == 0) {
         uint final_idx = local_min_indices[0];
-        best_result[0] = final_idx / num_nails;
-        best_result[1] = final_idx % num_nails;
+        best_result[0] = final_idx / count_nails;
+        best_result[1] = final_idx % count_nails;
     }
 }
 
@@ -146,10 +144,10 @@ kernel void draw_line(
     int sx = (x0 < x1) ? 1 : -1;
     int sy = (y0 < y1) ? 1 : -1;
 
-    int N = max(dx, dy);   // длина линии в пикселях
+    int N = max(dx, dy);
 
     uint t = get_global_id(0);
-    if (t > N) return;     // лишние потоки просто выходят
+    if (t > N) return;
 
     int x, y;
     if (dx >= dy) {

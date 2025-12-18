@@ -4,6 +4,11 @@
 #include <cstdint>
 #include <vector>
 
+struct Gradient
+{
+    float x, y;
+};
+
 class Image
 {
 public:
@@ -28,8 +33,6 @@ public:
     void save(std::string_view filename) const;
 
     void resize(int new_width, int new_height);
-
-    Image calculateEdges() const;
 
     uint8_t *data() const noexcept;
 

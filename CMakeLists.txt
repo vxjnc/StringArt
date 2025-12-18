@@ -16,14 +16,16 @@ FetchContent_Declare(
  GIT_REPOSITORY https://github.com/p-ranav/argparse.git
 )
 FetchContent_MakeAvailable(argparse)
+
 find_package(OpenCL REQUIRED)
 
 add_executable(${PROJECT_NAME} main.cpp ${SOURCE_FILES})
 target_link_libraries(${PROJECT_NAME} PRIVATE argparse::argparse OpenCL::OpenCL)
 
 target_include_directories(${PROJECT_NAME} PRIVATE
-    .
-    include
+    SYSTEM
+    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}
 )
 
 target_compile_options(${PROJECT_NAME} PRIVATE 
@@ -56,7 +58,7 @@ elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
         -g
         -fno-omit-frame-pointer
     )
-
+    
 else()
     message(STATUS "Configuring project ${PROJECT_NAME} for default mode: ${CMAKE_BUILD_TYPE}")
 endif()
