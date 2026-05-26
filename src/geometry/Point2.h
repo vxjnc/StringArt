@@ -1,8 +1,6 @@
 #pragma once
 
-template <typename T>
-struct Point2
-{
+template <typename T> struct Point2 {
     T x, y;
     Point2(T x = T{}, T y = T{}) : x(x), y(y) {}
 };

@@ -1,33 +1,29 @@
 #pragma once
 
-#include <vector>
 #include <memory>
 #include <random>
+#include <utility>
+#include <vector>
 
-#include "src/image/Image.h"
-#include "src/geometry/Point2.h"
 #include "src/compute/OpenCLManager.h"
+#include "src/geometry/Point2.h"
+#include "src/image/Image.h"
 
-class StringArtGenerator
-{
+class StringArtGenerator {
 public:
-    StringArtGenerator(const Image &input,
-                       std::span<int> imageSize,
-                       const int nailsCount,
-                       const int maxConnections,
-                       const std::vector<Color> &threadColors,
-                       std::mt19937 &gen);
+    StringArtGenerator(const Image& input, std::pair<int, int> imageSize, size_t nailsCount, size_t maxConnections,
+                       std::span<const Color> threadColors, std::mt19937& gen);
 
     void generate(const float alpha, const float kDensity);
 
     Image getResultImage();
-    const std::vector<std::pair<Color, uint32_t>> &getSequence() const;
+    const std::vector<std::pair<Color, uint32_t>>& getSequence() const;
 
-    std::vector<std::pair<Color, uint32_t>> loadSequence(const std::string_view filename);
-    const Image &rebuildFromSequence(const std::vector<std::pair<Color, uint32_t>> &sequences, const float alpha);
+    std::vector<std::pair<Color, uint32_t>> loadSequence(std::string_view filename);
+    const Image& rebuildFromSequence(std::span<const std::pair<Color, uint32_t>> sequences, float alpha);
 
 private:
-    void initializeNails(const int nailsCount, const short w, const short h);
+    void initializeNails(size_t nailsCount, short w, short h);
 
     Image targetImage;
     Image currentImage;

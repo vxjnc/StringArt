@@ -2,3 +2,4 @@ build/
 StringArt
 StringArt.exe
 .vscode/
+.cache/

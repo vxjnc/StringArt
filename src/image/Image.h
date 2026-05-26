@@ -1,28 +1,21 @@
 #pragma once
 
-#include <string_view>
 #include <cstdint>
-#include <vector>
+#include <string_view>
 
-struct Gradient
-{
-    float x, y;
-};
-
-class Image
-{
+class Image {
 public:
     Image();
 
     Image(int w, int h, uint8_t c);
 
-    Image(const Image &other);
+    Image(const Image& other);
 
-    Image(Image &&other) noexcept;
+    Image(Image&& other) noexcept;
 
-    Image &operator=(const Image &other);
+    Image& operator=(const Image& other);
 
-    Image &operator=(Image &&other) noexcept;
+    Image& operator=(Image&& other) noexcept;
 
     ~Image();
 
@@ -34,7 +27,8 @@ public:
 
     void resize(int new_width, int new_height);
 
-    uint8_t *data() const noexcept;
+    const uint8_t* data() const noexcept;
+    uint8_t* data() noexcept;
 
     int width() const noexcept;
 
@@ -42,14 +36,14 @@ public:
 
     uint8_t channels() const noexcept;
 
-    uint8_t *operator()(int x, int y) noexcept;
-    const uint8_t *operator()(int x, int y) const noexcept;
+    uint8_t* operator()(int x, int y) noexcept;
+    const uint8_t* operator()(int x, int y) const noexcept;
 
-    uint8_t *operator[](int index) noexcept;
-    const uint8_t *operator[](int index) const noexcept;
+    uint8_t* operator[](int index) noexcept;
+    const uint8_t* operator[](int index) const noexcept;
 
 private:
     int width_, height_;
     uint8_t channels_;
-    uint8_t *data_ = nullptr;
+    uint8_t* data_ = nullptr;
 };
