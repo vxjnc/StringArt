@@ -7,9 +7,9 @@
 #include <cmath>
 #include <stdexcept>
 
-#include "stb/stb_image.h"
-#include "stb/stb_image_resize.h"
-#include "stb/stb_image_write.h"
+#include <stb/stb_image.h>
+#include <stb/stb_image_resize2.h>
+#include <stb/stb_image_write.h>
 
 Image::Image() : width_(0), height_(0), channels_(4), data_(nullptr) {}
 
@@ -128,9 +128,10 @@ void Image::resize(int new_width, int new_height) {
         throw std::runtime_error("Failed to allocate memory for resized image");
     }
 
-    int result = stbir_resize_uint8(data_, width_, height_, 0, resized_data, new_width, new_height, 0, channels_);
+    unsigned char* result = stbir_resize_uint8_linear(data_, width_, height_, 0, resized_data, new_width, new_height, 0,
+                                                      static_cast<stbir_pixel_layout>(channels_));
 
-    if (result == 0) {
+    if (result == nullptr) {
         free(resized_data);
         throw std::runtime_error("Failed to resize image");
     }
